@@ -1,0 +1,17 @@
+services:
+  exporter:
+    build:
+      context: .
+      dockerfile: ./docker/exporter.Dockerfile
+    volumes:
+      - ./raw:/home/col/raw
+      - ./output:/home/col/output
+    environment:
+      NAME: ${NAME}
+      TAXON_ID: ${TAXON_ID}
+      XRELEASE_ID: ${XRELEASE_ID}
+      COL_USER: ${COL_USER}
+      COL_PASS: ${COL_PASS}
+      COL_API: ${COL_API}
+    entrypoint: python /home/col/exporter.py
+    tty: true
