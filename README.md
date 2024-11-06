@@ -1,8 +1,8 @@
-# xcol feedback exporter
+# xrelease feedback exporter
 
-This tool enables exporting name usages that were added to Catalogue of Life in the extended xcol releases in order to assist with gathering feedback from global species database experts.
+This tool enables exporting name usages that were added to Catalogue of Life xrelease in order to assist with gathering feedback from global species database experts.
 
-To assist with debugging, all interactions with the API server are recorded using [VCR.py](https://vcrpy.readthedocs.io/en/latest/) and the cassettes are stored in the raw folder. Keeping the VCR cassettes could be particularly useful in case an issue is found after a draft xcol release has been deleted. The authorization bearer tokens are filtered out of the cassette files, so it should be safe to share the VCR cassettes.
+To assist with debugging, all interactions with the API server are recorded using [VCR.py](https://vcrpy.readthedocs.io/en/latest/) and the cassettes are stored in the raw folder. Keeping the VCR cassettes could be particularly useful in case an issue is found after a draft xrelease has been deleted. The authorization bearer tokens are filtered out of the cassette files, so it should be safe to share the VCR cassettes.
 
 # Running
 
