@@ -60,15 +60,22 @@ def crawl(headers):
 
 def format_classification(classification):
     output = {
+        'domain': '',
         'kingdom': '',
+        'subkingdom': '',
         'phylum': '',
         'subphylum': '',
+        'infraphylum': '',
+        'parvphylum': '',
+        'megaclass': '',
         'class': '',
+        'subclass': '',
         'order': '',
         'suborder': '',
         'infraorder': '',
         'parvorder': '',
         'superfamily': '',
+        'epifamily': '',
         'family': '',
         'subfamily': '',
         'tribe': '',
@@ -78,13 +85,16 @@ def format_classification(classification):
         'species': '',
         'subspecies': '',
         'infraspecies': '',
+        'infraspecific_name': '',
         'form': '',
         'variety': '',
         'aberration': '',
-        'other': ''
+        'other': '',
+        'species_aggregate': '',
+        'proles': ''
     }
     for row in classification:
-        output[row['rank']] = row['name']
+        output[row['rank'].replace(' ', '_')] = row['name']
     
     # unranked causes problems because barcodes use unranked as rank and Biota uses rank unranked
     output.pop('unranked', None)
@@ -161,7 +171,8 @@ def write_datasets(datasets):
             output['version'] = dataset.get('version', '')
             output['description'] = dataset.get('description', '')
             contact = dataset.get('contact', '')
-            output['contact'] = contact.get('name', '')
+            if type(contact) == dict:
+                output['contact'] = contact.get('name', '')
             output['creator'] = format_people(dataset.get('creator', []))
             output['editor'] = format_people(dataset.get('editor', []))
             publisher = dataset.get('publisher', {'name': ''})
@@ -187,15 +198,22 @@ def write_tsv(results, datasets):
     tsv_file = f'output/{NAME}_{XRELEASE_ID}_{TAXON_ID}.tsv'
     reference_ids = []
     headers = [
+        'domain',
         'kingdom',
+        'subkingdom',
         'phylum',
         'subphylum',
+        'infraphylum',
+        'parvphylum',
+        'megaclass',
         'class',
+        'subclass',
         'order',
         'suborder',
         'infraorder',
         'parvorder',
         'superfamily',
+        'epifamily',
         'family',
         'subfamily',
         'tribe',
@@ -205,10 +223,13 @@ def write_tsv(results, datasets):
         'species',
         'subspecies',
         'infraspecies',
+        'infraspecific_name',
         'form',
         'variety',
         'aberration',
         'other',
+        'species_aggregate',
+        'proles',
         'dataset_id',
         'dataset_alias',
         'dataset_link',
@@ -280,6 +301,10 @@ def write_tsv(results, datasets):
             output['reference_id'] = '|'.join(referenceIds)
             output['identifiers'] = '|'.join(row['usage']['name'].get('identifier', ''))
             reference_ids.extend([ref_id for ref_id in referenceIds if ref_id not in reference_ids])
+            if len(output.values()) != len(headers):
+                print(len(output.values()))
+                print(len(headers))
+                print(output)
             writer.writerow(output.values())
     return reference_ids
 
@@ -287,7 +312,7 @@ def write_tsv(results, datasets):
 def crawl_references(references_ids, headers):
     print('\nCrawling references')
     i = 0
-    results = []
+    results = {}
     for ref_id in references_ids:
         if i % 10 == 0:
             print(f"{i} of {len(references_ids)}")
@@ -296,7 +321,8 @@ def crawl_references(references_ids, headers):
             ref_url = COL_API + '/dataset/' + XRELEASE_ID +'/reference/' + ref_id
             r = requests.get(ref_url, headers=headers)
             r.raise_for_status()
-            results.append(r.json())
+            ref = r.json()
+            results[ref_id] = ref
         i += 1
     return results
 
@@ -309,9 +335,9 @@ def write_references(results):
     with open(tsv_file, 'w', newline='') as f:
         writer = csv.writer(f, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL, escapechar='\\')
         writer.writerow(headers)
-        for row in results:
+        for id, row in results.items():
             output = {}
-            output['reference_id'] = row['id']
+            output['reference_id'] = id
             csl = row.get('csl', {})
             output['source_id'] = csl.get('id', '')
             output['type'] = csl.get('type', '')
