@@ -211,6 +211,7 @@ def write_tsv(results, datasets):
         'other',
         'dataset_id',
         'dataset_alias',
+        'dataset_link',
         'parent_id',
         'taxon_id',
         'name_id',
@@ -257,6 +258,7 @@ def write_tsv(results, datasets):
             output = format_classification(row['classification'])
             output['sector_dataset_id'] = sector_dataset_id
             output['sector_dataset_alias'] = sector_dataset
+            output['sector_dataset_link'] = f'https://www.checklistbank.org/dataset/{sector_dataset_id}'
             output['parent_id'] = row['usage']['parentId']
             output['taxon_id'] = row['usage']['id']
             output['name_id'] = row['usage']['name']['id']
