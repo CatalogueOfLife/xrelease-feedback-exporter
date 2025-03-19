@@ -28,33 +28,64 @@ def login():
 
 def crawl(headers):
     print('\nCrawling merged name usages')
-    search_url = COL_API + '/dataset/' + XRELEASE_ID + '/nameusage/search'
-    params = {
-        'TAXON_ID': TAXON_ID,
-        'facet': ['rank', 'issue', 'status', 'nomStatus', 'nomCode', 'nameType', 'field', 'authorship', 'authorshipYear', 
-                  'extinct', 'environment', 'origin', 'sectorMode', 'secondarySourceGroup', 'sectorDatasetKey', 'group'],
-        'limit': 1000,
-        'offset': 0,
-        'sectorMode': 'merge',
-        'sortBy': 'taxonomic'
-    }
+
+    # the nameusage endpoint limits to retrieving 100000 records so crawl children to limit the number of records
+    print('\nCrawling children name usages')
+    tree_url = COL_API + '/dataset/' + XRELEASE_ID + '/tree/' + TAXON_ID + '/children?insertPlaceholder=false&limit=1000'  # purposefully using 3LR because XCOL attaches too many children
+    r = requests.get(tree_url, headers=headers)
+    r.raise_for_status()
+
+    children = []
     total = float('inf')
-    results = []
     i = 0
-    while params['offset'] < total:
-        with vcr.use_cassette(f'raw/vcr_cassettes/{NAME}_{XRELEASE_ID}_{TAXON_ID}/nameusages/{params["offset"]}.yaml', 
+    while len(children) < total:
+        with vcr.use_cassette(f'raw/vcr_cassettes/{NAME}_{XRELEASE_ID}_{TAXON_ID}/children/{i}.yaml', 
                               filter_headers=['authorization'], record_mode=RecordMode.NEW_EPISODES):
-            r = requests.get(search_url, headers=headers, params=params)
+            r = requests.get(tree_url, headers=headers)
             r.raise_for_status()
-            if 'result' in r.json():
-                results += r.json()['result']
-            params['offset'] += params['limit']
+            children += r.json()['result']
             total = r.json()['total']
-        if i % params['limit'] == 0:
+        if i % 1000 == 0:
             print(f"{i} of {total}")
-        i += params['limit']
-    if len(results) != total:
-        exit('Error: only ' + str(len(results)) + ' of ' + str(total) + ' results were returned')
+        i += 1000
+    print(f"Found {len(children)} children")
+    children = r.json()['result']
+    children_ids = []
+    for child in children:
+        children_ids.append(str(child['id']))
+
+    search_url = COL_API + '/dataset/' + XRELEASE_ID + '/nameusage/search'
+
+    results = []
+
+    for child_id in children_ids:
+        i = 0
+        subresults = []
+        params = {
+            'TAXON_ID': child_id,
+            'facet': ['rank', 'issue', 'status', 'nomStatus', 'nomCode', 'nameType', 'field', 'authorship', 'authorshipYear', 
+                    'extinct', 'environment', 'origin', 'sectorMode', 'secondarySourceGroup', 'sectorDatasetKey', 'group'],
+            'limit': 1000,
+            'offset': 0,
+            'sectorMode': 'merge',
+            'sortBy': 'taxonomic'
+        }
+        total = float('inf')
+        while params['offset'] < total:
+            with vcr.use_cassette(f'raw/vcr_cassettes/{NAME}_{XRELEASE_ID}_{TAXON_ID}/nameusages/{params["offset"]}.yaml', 
+                                filter_headers=['authorization'], record_mode=RecordMode.NEW_EPISODES):
+                r = requests.get(search_url, headers=headers, params=params)
+                r.raise_for_status()
+                if 'result' in r.json():
+                    subresults += r.json()['result']
+                params['offset'] += params['limit']
+                total = r.json()['total']
+            if i % params['limit'] == 0:
+                print(f"{i} of {total}")
+            i += params['limit']
+        if len(subresults) != total:
+            exit('Error: only ' + str(len(subresults)) + ' of ' + str(total) + ' results were returned')
+        results += subresults
     return results
 
 
