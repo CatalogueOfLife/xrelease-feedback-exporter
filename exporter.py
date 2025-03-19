@@ -358,6 +358,12 @@ def import_tsv_to_sqlite():
     os.system(f'sqlite3 output/{NAME}_{XRELEASE_ID}_{TAXON_ID}.sqlite ".mode tabs" ".import --skip 1 output/{NAME}_{XRELEASE_ID}_{TAXON_ID}_references.tsv reference"')
     os.system(f'sqlite3 output/{NAME}_{XRELEASE_ID}_{TAXON_ID}.sqlite ".mode tabs" ".import --skip 1 output/{NAME}_{XRELEASE_ID}_{TAXON_ID}_datasets.tsv dataset"')
 
+# def convert_to_xlsx():
+#     print('\nConverting SQLite to XLSX')
+#     os.system(f'libreoffice --headless -infilter="Text - txt - csv (StarCalc):9" --convert-to xlsx output/{NAME}_{XRELEASE_ID}_{TAXON_ID}.tsv')
+#     os.system(f'libreoffice --headless -infilter="Text - txt - csv (StarCalc):9" --convert-to xlsx output/{NAME}_{XRELEASE_ID}_{TAXON_ID}_references.tsv')
+#     os.system(f'libreoffice --headless -infilter="Text - txt - csv (StarCalc):9" --convert-to xlsx output/{NAME}_{XRELEASE_ID}_{TAXON_ID}_datasets.tsv')
+
 def main():
     headers = login()
     results = crawl(headers=headers)
@@ -367,6 +373,7 @@ def main():
     references = crawl_references(references_ids=reference_ids, headers=headers)
     write_references(references)
     import_tsv_to_sqlite()
+    #convert_to_xlsx()
 
 
 if __name__ == '__main__':
